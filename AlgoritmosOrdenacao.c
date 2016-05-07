@@ -15,6 +15,9 @@ void printList(List *);
 void printPrevAndNext(List *, int);
 int getLength(List *);
 List * getNth(List *, int);
+List * copyList(List *);
+void splitList(List *, List **, List **);
+List * mergeList(List *, List *);
 
 void xorSwap(int *, int *);
 void nodeSwap (List **, List **);
@@ -23,30 +26,42 @@ void callBubbleSort(List *);
 void callInsertionSort(List *);
 void callSelectionSort(List *);
 void callShellSort(List *);
-void callMergeSort(List * l);
+void callMergeSort(List **);
 
 int main() {
-    List * newList;
+    List *newList, *cpList;
 
     initList(&newList);
     addValue(&newList, 1);
     addValue(&newList, 2);
-    addValue(&newList, 3);
-    addValue(&newList, 4);
     addValue(&newList, 5);
     addValue(&newList, 6);
+    addValue(&newList, 3);
+    addValue(&newList, 4);
     addValue(&newList, 7);
     addValue(&newList, 8);
 
     printf("Original list\n");
     printList(newList);
 
-    //alteram a lista original porque fazer alteracao no valor do nos ponteiros do no.
-    //TODO: chamar um metodo por execucao.
-    //callBubbleSort(newList);
-  	//callInsertionSort(newList);
-  	//callSelectionSort(newList);
-  	callShellSort(newList);
+    /*
+    cpList = copyList(newList);
+    callBubbleSort(cpList);
+
+    cpList = copyList(newList);
+  	callInsertionSort(cpList);
+
+  	cpList = copyList(newList);
+  	callSelectionSort(cpList);
+
+  	cpList = copyList(newList);
+  	callShellSort(cpList);
+    */
+
+    printf("Ordering by MergeSort\n");
+    cpList = copyList(newList);
+    callMergeSort(&cpList);
+    printList(cpList);
 
     return 0;
 }
@@ -102,6 +117,62 @@ List * getNth(List * l, int index) {
     return NULL;
 }
 
+List * copyList(List * l) {
+    int size = getLength(l);
+    List * last = getNth(l, (size-1));
+    List * copy = NULL;
+
+    for(last; last!=NULL; last = last->prev) {
+        addValue(&copy, last->value);
+    }
+
+    return copy;
+}
+
+void splitList(List * l, List ** left, List ** right) {
+    List *fast, *slow;
+
+    if (l == NULL || l->next == NULL) {
+        *left = l;
+        *right = NULL;
+    }
+    else {
+        slow = l;
+        fast = l->next;
+        while (fast != NULL) {
+            fast = fast->next;
+            if (fast != NULL) {
+                slow = slow->next;
+                fast = fast->next;
+            }
+        }
+        *left = l;
+        *right = slow->next;
+        slow->next = NULL;
+    }
+}
+
+/* See http://geeksforgeeks.org/?p=3622 for details of this
+   function */
+List * mergeList(List * left, List * right) {
+  List * result = NULL;
+
+  /* Base cases */
+  if (left == NULL) return(right);
+  else if (right == NULL) return(left);
+
+  /* Pick either a or b, and recur */
+  if (left->value <= right->value) {
+     result = left;
+     result->next = mergeList(left->next, right);
+  }
+  else {
+     result = right;
+     result->next = mergeList(left, right->next);
+  }
+  return(result);
+}
+
 void xorSwap (int *a , int *b) {
   	if (*a != *b) *a ^= *b ^= *a ^= *b;
 }
@@ -135,8 +206,8 @@ void callBubbleSort(List * l) {
         while (l->next) {
             if (l->value > l->next->value) {
                 done = 0;
-				//xorSwap(&(l->value), &(l->next->value));
-              	nodeSwap(&copy, &l);
+				xorSwap(&(l->value), &(l->next->value));
+              	//nodeSwap(&copy, &l);
               	printList(copy);
             }
             l = l->next;
@@ -208,6 +279,16 @@ void callShellSort(List * l) {
     }
 }
 
-void callMergeSort(List * l) {
+void callMergeSort(List ** l) {
+    List * head = *l;
+    List ** left, ** right;
 
+    if (head == NULL || head->next == NULL) return;
+
+    splitList(head, &left, &right);
+
+    callMergeSort(&left);
+    callMergeSort(&right);
+
+    *l = mergeList(left, right);
 }
